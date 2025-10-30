@@ -23,10 +23,8 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/analysis', require('./routes/analysis'));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/innerverse', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// Database connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/innerverse')
 .then(() => console.log('Connected to MongoDB'))
 .catch((error) => console.error('MongoDB connection error:', error));
 
@@ -40,7 +38,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res, next) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
