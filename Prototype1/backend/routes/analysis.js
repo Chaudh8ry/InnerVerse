@@ -57,22 +57,23 @@ router.post('/extract-ingredients', auth, upload.single('image'), async (req, re
     const imageBuffer = await fs.readFile(imagePath);
     const imageBase64 = imageBuffer.toString('base64');
 
-    // Extract ingredients using Gemini API
-    const extractedText = await geminiApi.extractIngredientsFromImage(imageBase64);
+    // Step 1: Smart OCR - Extract ingredients and nutrition table
+    const scannedData = await geminiApi.extractIngredientsFromImage(imageBase64);
 
     // Clean up the uploaded file
     await fs.unlink(imagePath);
 
-    // Parse ingredients list
-    const ingredientsList = extractedText
-      .split(',')
-      .map(ingredient => ingredient.trim())
-      .filter(ingredient => ingredient.length > 0);
+    // Format ingredients for frontend display
+    const extractedText = scannedData.ingredients_list.map(item => 
+      item.percent ? `${item.ingredient} (${item.percent})` : item.ingredient
+    ).join(', ');
 
     res.json({
-      message: 'Ingredients extracted successfully',
+      message: 'Data extracted successfully',
+      scanned_ingredients_list: scannedData.ingredients_list,
+      scanned_nutrition_table: scannedData.nutrition_table,
       extracted_text: extractedText,
-      ingredients_list: ingredientsList,
+      ingredients_list: scannedData.ingredients_list.map(item => item.ingredient),
       image_processed: true
     });
 
@@ -95,14 +96,15 @@ router.post('/extract-ingredients', auth, upload.single('image'), async (req, re
 });
 
 // @route   POST /api/analysis/analyze-ingredients
-// @desc    Analyze confirmed ingredients list and generate personalized report
+// @desc    Analyze confirmed ingredients list and nutrition table, generate personalized report with DRI
 // @access  Private
 router.post('/analyze-ingredients', auth, async (req, res) => {
   try {
-    const { ingredients_list, product_name } = req.body;
+    const { scanned_ingredients_list, scanned_nutrition_table, product_name } = req.body;
 
-    if (!ingredients_list || !Array.isArray(ingredients_list) || ingredients_list.length === 0) {
-      return res.status(400).json({ message: 'Valid ingredients list is required' });
+    // Expect scanned_ingredients_list to be an array of {ingredient, percent} objects
+    if (!scanned_ingredients_list || !Array.isArray(scanned_ingredients_list) || scanned_ingredients_list.length === 0) {
+      return res.status(400).json({ message: 'Valid scanned ingredients list is required' });
     }
 
     // Get user's health profile
@@ -111,72 +113,40 @@ router.post('/analyze-ingredients', auth, async (req, res) => {
       return res.status(400).json({ message: 'Health profile not found. Please complete your profile first.' });
     }
 
-    const ingredientDataForReport = [];
-
-    // Process each ingredient (Cache-and-Curate Logic)
-    for (const ingredientName of ingredients_list) {
-      const normalizedName = ingredientName.toLowerCase().trim();
-      
-      // Step 3a: Check cache
-      let cachedIngredient = await Ingredient.findOne({ 
-        ingredient_name: normalizedName 
+    // Step 3: The "Main Analysis" AI Call with nutrition data and activity_level for DRI calculations
+    let analysisResult;
+    try {
+      analysisResult = await geminiApi.performMainAnalysis(healthProfile, scanned_ingredients_list, scanned_nutrition_table || {});
+    } catch (analysisError) {
+      console.error('Main analysis error:', analysisError);
+      return res.status(500).json({ 
+        message: 'Failed to analyze ingredients',
+        error: analysisError.message 
       });
-
-      if (cachedIngredient) {
-        // Step 3c: Cache hit - use existing data
-        ingredientDataForReport.push({
-          ingredient_name: ingredientName,
-          analysis_json: cachedIngredient.analysis_json
-        });
-      } else {
-        // Step 3b: Cache miss - fetch from AI
-        try {
-          const analysisData = await geminiApi.analyzeIngredient(ingredientName);
-          
-          // Save to cache
-          const newIngredient = new Ingredient({
-            ingredient_name: normalizedName,
-            analysis_json: analysisData,
-            last_analyzed: new Date()
-          });
-          
-          await newIngredient.save();
-          
-          ingredientDataForReport.push({
-            ingredient_name: ingredientName,
-            analysis_json: analysisData
-          });
-        } catch (analysisError) {
-          console.error(`Failed to analyze ingredient ${ingredientName}:`, analysisError);
-          
-          // Add with minimal data if analysis fails
-          ingredientDataForReport.push({
-            ingredient_name: ingredientName,
-            analysis_json: {
-              type: "unknown",
-              tags: ["unanalyzed"],
-              potential_concerns: []
-            }
-          });
-        }
-      }
     }
 
-    // Personalize the report using rules engine
-    const warnings = rulesEngine.analyzeIngredientConflicts(healthProfile, ingredientDataForReport);
-    const overallSummary = rulesEngine.generateOverallSummary(warnings);
+    // V5 Step 4: Process AI Response & Generate Chart Data
+    const ingredient_profile_data = {};
+    analysisResult.itemized_analysis.forEach(ingredient => {
+      const foodType = ingredient.food_type || 'Other';
+      ingredient_profile_data[foodType] = (ingredient_profile_data[foodType] || 0) + 1;
+    });
 
-    // Prepare final report
+    // Step 5: Prepare Final Report
     const analysisReport = {
       product_name: product_name || 'Unknown Product',
-      overall_summary: overallSummary,
-      warnings: warnings,
-      ingredients_analyzed: ingredientDataForReport.map(item => ({
-        name: item.ingredient_name,
-        type: item.analysis_json.type,
-        tags: item.analysis_json.tags
-      })),
-      total_ingredients: ingredientDataForReport.length,
+      // Overall profile from AI
+      overall_profile: analysisResult.overall_profile,
+      // Itemized analysis from AI
+      itemized_analysis: analysisResult.itemized_analysis,
+      // Chart data
+      ingredient_profile_data: ingredient_profile_data,
+      // Nutrition table data (user-confirmed)
+      nutrition_table_data: scanned_nutrition_table || {},
+      // Full AI JSON for saving
+      analysis_result: analysisResult,
+      // Metadata
+      total_ingredients: analysisResult.itemized_analysis.length,
       analysis_timestamp: new Date().toISOString(),
       user_profile_summary: {
         age_group: healthProfile.age_group,

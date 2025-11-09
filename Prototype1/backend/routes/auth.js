@@ -18,11 +18,11 @@ const generateToken = (userId) => {
 // @access  Public
 router.post('/register', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, first_name, last_name } = req.body;
 
     // Validation
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    if (!email || !password || !first_name || !last_name) {
+      return res.status(400).json({ message: 'Email, password, first name, and last name are required' });
     }
 
     if (password.length < 6) {
@@ -38,7 +38,9 @@ router.post('/register', async (req, res) => {
     // Create user
     const user = new User({
       email,
-      password
+      password,
+      first_name,
+      last_name
     });
 
     await user.save();
@@ -51,7 +53,9 @@ router.post('/register', async (req, res) => {
       token,
       user: {
         id: user._id,
-        email: user.email
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name
       }
     });
 
@@ -94,6 +98,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
         hasProfile: !!user.health_profile
       }
     });
@@ -117,6 +123,8 @@ router.get('/me', auth, async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
         hasProfile: !!user.health_profile,
         profile: user.health_profile
       }

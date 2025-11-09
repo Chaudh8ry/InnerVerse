@@ -117,80 +117,98 @@ class RulesEngine {
 
   analyzeIngredientConflicts(userProfile, ingredientDataList) {
     const warnings = [];
-    const allConditions = [];
+    const criticalWarnings = [];
 
-    // Collect all user conditions and preferences
-    if (userProfile.allergies) {
-      allConditions.push(...userProfile.allergies);
-    }
-    
-    if (userProfile.health_conditions) {
-      userProfile.health_conditions.forEach(hc => {
-        allConditions.push(hc.condition);
-      });
-    }
+    // Collect all user conditions for matching
+    const userAllergies = userProfile.allergies || [];
+    const userHealthConditions = (userProfile.health_conditions || []).map(hc => hc.condition);
+    const userDietaryPreferences = userProfile.dietary_preferences || [];
 
-    if (userProfile.dietary_preferences) {
-      allConditions.push(...userProfile.dietary_preferences);
-    }
+    // Create a combined list of all conditions for matching
+    const allUserConditions = [
+      ...userAllergies,
+      ...userHealthConditions,
+      ...userDietaryPreferences
+    ];
 
-    // Check each ingredient against user's profile
+    // V2: Check each ingredient's concerns_for_conditions array
     ingredientDataList.forEach(ingredient => {
       const { ingredient_name, analysis_json } = ingredient;
       
       if (!analysis_json) return;
 
-      // Check against each user condition
-      allConditions.forEach(condition => {
-        const rule = this.conflictRules[condition];
-        if (!rule) return;
+      // V2: Check concerns_for_conditions first (primary method)
+      if (analysis_json.concerns_for_conditions && Array.isArray(analysis_json.concerns_for_conditions)) {
+        analysis_json.concerns_for_conditions.forEach(concern => {
+          const concernCondition = concern.condition;
+          const concernWarning = concern.warning;
 
-        let hasConflict = false;
-        let conflictLevel = 'MEDIUM';
+          // Match against user's conditions (case-insensitive partial match)
+          const matchedCondition = allUserConditions.find(userCondition => 
+            userCondition.toLowerCase().includes(concernCondition.toLowerCase()) ||
+            concernCondition.toLowerCase().includes(userCondition.toLowerCase())
+          );
 
-        // Check tags for conflicts
-        if (rule.tags && analysis_json.tags) {
+          if (matchedCondition) {
+            // Determine warning level - allergies are HIGH, others are MEDIUM
+            const isAllergy = userAllergies.some(allergy => 
+              allergy.toLowerCase().includes(concernCondition.toLowerCase()) ||
+              concernCondition.toLowerCase().includes(allergy.toLowerCase())
+            );
+            
+            const warningLevel = isAllergy ? 'HIGH' : 'MEDIUM';
+            
+            // Format warning message
+            const warningMessage = `**${ingredient_name}:** ${concernWarning}`;
+            
+            warnings.push({
+              ingredient: ingredient_name,
+              condition: matchedCondition,
+              level: warningLevel,
+              message: warningMessage,
+              type: this.getWarningType(matchedCondition, userProfile)
+            });
+
+            // Also add to critical warnings list (formatted string for AI summary)
+            criticalWarnings.push(warningMessage);
+          }
+        });
+      }
+
+      // Fallback: Also check old tag-based system for backward compatibility
+      if (analysis_json.tags && Array.isArray(analysis_json.tags)) {
+        allUserConditions.forEach(condition => {
+          const rule = this.conflictRules[condition];
+          if (!rule || !rule.tags) return;
+
           const tagConflict = rule.tags.some(ruleTag => 
             analysis_json.tags.some(ingredientTag => 
               ingredientTag.toLowerCase().includes(ruleTag.toLowerCase()) ||
               ruleTag.toLowerCase().includes(ingredientTag.toLowerCase())
             )
           );
-          
+
           if (tagConflict) {
-            hasConflict = true;
-            // Allergies are always HIGH priority
-            if (userProfile.allergies && userProfile.allergies.includes(condition)) {
-              conflictLevel = 'HIGH';
+            // Check if we already have this warning from concerns_for_conditions
+            const existingWarning = warnings.find(w => 
+              w.ingredient === ingredient_name && w.condition === condition
+            );
+
+            if (!existingWarning) {
+              const isAllergy = userAllergies.includes(condition);
+              const warningLevel = isAllergy ? 'HIGH' : 'MEDIUM';
+              
+              warnings.push({
+                ingredient: ingredient_name,
+                condition: condition,
+                level: warningLevel,
+                message: `${ingredient_name}: ${rule.message}`,
+                type: this.getWarningType(condition, userProfile)
+              });
             }
           }
-        }
-
-        // Check potential concerns
-        if (rule.potential_concerns && analysis_json.potential_concerns) {
-          const concernConflict = analysis_json.potential_concerns.find(concern =>
-            rule.potential_concerns.some(ruleConcern =>
-              concern.condition.toLowerCase().includes(ruleConcern.toLowerCase()) ||
-              ruleConcern.toLowerCase().includes(concern.condition.toLowerCase())
-            )
-          );
-          
-          if (concernConflict) {
-            hasConflict = true;
-            conflictLevel = concernConflict.level || 'MEDIUM';
-          }
-        }
-
-        if (hasConflict) {
-          warnings.push({
-            ingredient: ingredient_name,
-            condition: condition,
-            level: conflictLevel,
-            message: `${ingredient_name}: ${rule.message}`,
-            type: this.getWarningType(condition, userProfile)
-          });
-        }
-      });
+        });
+      }
     });
 
     // Sort warnings by priority (HIGH > MEDIUM > LOW)
@@ -199,7 +217,7 @@ class RulesEngine {
       return priorityOrder[b.level] - priorityOrder[a.level];
     });
 
-    return warnings;
+    return { warnings, criticalWarnings };
   }
 
   getWarningType(condition, userProfile) {

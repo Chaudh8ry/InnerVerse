@@ -16,12 +16,17 @@ router.post('/', auth, async (req, res) => {
       health_conditions,
       dietary_preferences,
       additional_info,
-      body_metrics
+      body_metrics,
+      activity_level
     } = req.body;
 
     // Validation
     if (!age_group) {
       return res.status(400).json({ message: 'Age group is required' });
+    }
+
+    if (!activity_level) {
+      return res.status(400).json({ message: 'Activity level is required' });
     }
 
     // Calculate BMI if height and weight are provided
@@ -52,6 +57,7 @@ router.post('/', auth, async (req, res) => {
       health_conditions: health_conditions || [],
       dietary_preferences: dietary_preferences || [],
       additional_info: additional_info || '',
+      activity_level,
       body_metrics: {
         ...body_metrics,
         bmi

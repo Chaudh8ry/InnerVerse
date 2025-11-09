@@ -14,6 +14,16 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  first_name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  last_name: {
+    type: String,
+    required: true,
+    trim: true
+  },
   health_profile: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'HealthProfile'

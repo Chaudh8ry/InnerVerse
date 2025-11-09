@@ -5,6 +5,7 @@ import Scanner from './components/Scanner';
 import ProfileForm from './components/ProfileForm';
 import ConfirmationView from './components/ConfirmationView';
 import AnalysisReport from './components/AnalysisReport';
+import ScanHistory from './components/ScanHistory';
 import { getAuthToken, getUser, authAPI, profileAPI } from './services/api';
 
 function App() {
@@ -96,6 +97,11 @@ function App() {
     setCurrentView('scanner');
   };
 
+  const handleViewScan = (report) => {
+    setAnalysisData({ report });
+    setCurrentView('results');
+  };
+
   const switchToRegister = () => {
     setCurrentView('register');
   };
@@ -106,6 +112,10 @@ function App() {
 
   const goToProfile = () => {
     setCurrentView('profile');
+  };
+
+  const goToScanHistory = () => {
+    setCurrentView('history');
   };
 
   if (currentView === 'loading') {
@@ -154,6 +164,16 @@ function App() {
         onLogout={handleLogout}
         onProfileEdit={goToProfile}
         onAnalysisComplete={handleAnalysisComplete}
+        onViewHistory={goToScanHistory}
+      />
+    );
+  }
+
+  if (currentView === 'history') {
+    return (
+      <ScanHistory
+        onBack={handleBackToScanner}
+        onViewScan={handleViewScan}
       />
     );
   }

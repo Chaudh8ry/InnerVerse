@@ -44,17 +44,17 @@ const Login = ({ onLogin, switchToRegister }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div className="bg-white rounded-xl p-8 w-full max-w-md border border-gray-200 shadow-sm">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Heart className="h-8 w-8 text-red-500 mr-3" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-semibold text-gray-800" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               InnerVerse
             </h1>
-            <Shield className="h-8 w-8 text-green-500 ml-3" />
+            <Shield className="h-8 w-8 text-emerald-600 ml-3" />
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-base">
             Sign in to your account
           </p>
         </div>
@@ -117,13 +117,13 @@ const Login = ({ onLogin, switchToRegister }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 ${
               loading 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+                : 'bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-lg'
             }`}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            <span className="text-sm">{loading ? 'Signing In...' : 'Sign In'}</span>
           </button>
         </form>
 

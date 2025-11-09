@@ -6,7 +6,9 @@ const Register = ({ onRegister, switchToLogin }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    first_name: '',
+    last_name: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -22,7 +24,7 @@ const Register = ({ onRegister, switchToLogin }) => {
   };
 
   const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.first_name || !formData.last_name) {
       setError('All fields are required');
       return false;
     }
@@ -49,7 +51,12 @@ const Register = ({ onRegister, switchToLogin }) => {
     setError('');
 
     try {
-      const response = await authAPI.register(formData.email, formData.password);
+      const response = await authAPI.register(
+        formData.email, 
+        formData.password,
+        formData.first_name,
+        formData.last_name
+      );
       
       // Store token and user data
       setAuthToken(response.data.token);
@@ -68,17 +75,17 @@ const Register = ({ onRegister, switchToLogin }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div className="bg-white rounded-xl p-8 w-full max-w-md border border-gray-200 shadow-sm">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Heart className="h-8 w-8 text-red-500 mr-3" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-semibold text-gray-800" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               InnerVerse
             </h1>
-            <Shield className="h-8 w-8 text-green-500 ml-3" />
+            <Shield className="h-8 w-8 text-emerald-600 ml-3" />
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-base">
             Create your account to get started
           </p>
         </div>
@@ -92,6 +99,38 @@ const Register = ({ onRegister, switchToLogin }) => {
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* First Name and Last Name Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="First name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+
           {/* Email Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -170,14 +209,14 @@ const Register = ({ onRegister, switchToLogin }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-colors flex items-center justify-center ${
+            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center ${
               loading 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+                : 'bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-lg'
             }`}
           >
             <UserPlus className="h-5 w-5 mr-2" />
-            {loading ? 'Creating Account...' : 'Create Account'}
+            <span className="text-sm">{loading ? 'Creating Account...' : 'Create Account'}</span>
           </button>
         </form>
 

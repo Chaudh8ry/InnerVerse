@@ -4,6 +4,7 @@ import { profileAPI } from '../services/api';
 
 const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
   const [selectedAge, setSelectedAge] = useState('');
+  const [selectedActivityLevel, setSelectedActivityLevel] = useState('');
   const [nutritionConditions, setNutritionConditions] = useState({
     undernutrition: [],
     micronutrientDeficiency: [],
@@ -35,6 +36,7 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
   useEffect(() => {
     if (existingProfile) {
       setSelectedAge(existingProfile.age_group || '');
+      setSelectedActivityLevel(existingProfile.activity_level || '');
       setAllergies(existingProfile.allergies || []);
       setAdditionalInfo(existingProfile.additional_info || '');
       
@@ -76,6 +78,13 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
     { value: '20-39years', label: '20-39 years (Young Adults)', icon: '👨', description: 'Peak physical condition, focus on maintaining health' },
     { value: '40-59years', label: '40-59 years (Middle Age)', icon: '👩', description: 'Metabolism slows, increased risk of chronic diseases' },
     { value: '60+years', label: '60+ years (Older Adults)', icon: '👴', description: 'Focus on bone health, heart health, and easy digestion' }
+  ];
+
+  const activityLevels = [
+    { value: 'Sedentary', label: 'Sedentary', description: 'Little or no exercise' },
+    { value: 'Lightly Active', label: 'Lightly Active', description: 'Exercise 1-3 days/week' },
+    { value: 'Moderately Active', label: 'Moderately Active', description: 'Exercise 3-5 days/week' },
+    { value: 'Very Active', label: 'Very Active', description: 'Hard exercise 6-7 days/week' }
   ];
 
   const nutritionData = {
@@ -233,6 +242,11 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
       return;
     }
 
+    if (!selectedActivityLevel) {
+      setError('Please select your activity level');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess(false);
@@ -251,6 +265,7 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
 
       const profileData = {
         age_group: selectedAge,
+        activity_level: selectedActivityLevel,
         allergies,
         health_conditions: healthConditions,
         dietary_preferences: [], // You can add this if needed
@@ -280,10 +295,10 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+        <div className="bg-white rounded-xl p-8 text-center max-w-md border border-gray-200 shadow-sm">
           <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-green-600 mb-2">Profile Saved!</h2>
-          <p className="text-gray-600">Your health profile has been updated successfully.</p>
+          <h2 className="text-xl font-semibold text-emerald-600 mb-2" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>Profile Saved!</h2>
+          <p className="text-gray-600 text-base">Your health profile has been updated successfully.</p>
         </div>
       </div>
     );
@@ -305,14 +320,14 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           )}
           <div className="flex items-center">
             <Heart className="h-8 w-8 text-red-500 mr-3" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-semibold text-gray-800" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               Health Profile
             </h1>
-            <Shield className="h-8 w-8 text-green-500 ml-3" />
+            <Shield className="h-8 w-8 text-emerald-600 ml-3" />
           </div>
         </div>
 
-        <p className="text-gray-600 text-lg max-w-2xl mb-8">
+        <p className="text-gray-600 text-base max-w-2xl mb-8 leading-relaxed">
           Create your personalized health profile to get accurate food recommendations based on your specific needs and restrictions.
         </p>
 
@@ -325,8 +340,8 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Age Group Selection */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               <span className="text-2xl mr-3">👥</span>
               Consumer Age Group *
             </h2>
@@ -336,10 +351,10 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
                   key={group.value}
                   type="button"
                   onClick={() => setSelectedAge(group.value)}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 text-left hover:shadow-md ${
+                  className={`p-4 rounded-lg transition-all duration-200 text-left ${
                     selectedAge === group.value
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-2 border-emerald-600 bg-emerald-50 shadow-sm'
+                      : 'border-2 border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <div className="flex items-center">
@@ -354,9 +369,34 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
             </div>
           </div>
 
+          {/* Activity Level Selection */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
+              <span className="text-2xl mr-3">🏃</span>
+              What is your typical activity level? *
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {activityLevels.map((level) => (
+                <button
+                  key={level.value}
+                  type="button"
+                  onClick={() => setSelectedActivityLevel(level.value)}
+                  className={`p-4 rounded-lg transition-all duration-200 text-left ${
+                    selectedActivityLevel === level.value
+                      ? 'border-2 border-emerald-600 bg-emerald-50 shadow-sm'
+                      : 'border-2 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{level.label}</div>
+                  <div className="text-xs text-gray-500 mt-1">{level.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Body Metrics Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               <span className="text-2xl mr-3">📏</span>
               Body Metrics (Optional)
             </h2>
@@ -444,9 +484,9 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           </div>
 
           {/* Nutrition Conditions */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
                 <span className="text-2xl mr-3">🏥</span>
                 Nutrition & Health Conditions
               </h2>
@@ -503,8 +543,8 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           </div>
 
           {/* Allergies Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               <AlertCircle className="h-6 w-6 text-red-500 mr-3" />
               Food Allergies & Intolerances
             </h2>
@@ -527,8 +567,8 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           </div>
 
           {/* Additional Information */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               <Info className="h-6 w-6 text-blue-500 mr-3" />
               Additional Information
             </h2>
@@ -548,11 +588,11 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           <div className="flex justify-center">
             <button
               type="submit"
-              disabled={loading || !selectedAge}
-              className={`px-12 py-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center ${
-                loading || !selectedAge
+              disabled={loading || !selectedAge || !selectedActivityLevel}
+              className={`px-12 py-4 rounded-lg font-medium text-base transition-all duration-200 flex items-center ${
+                loading || !selectedAge || !selectedActivityLevel
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-lg'
               }`}
             >
               <Save className="h-6 w-6 mr-3" />
@@ -561,9 +601,13 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
           </div>
 
           {/* Form Validation Hint */}
-          {!selectedAge && (
+          {(!selectedAge || !selectedActivityLevel) && (
             <div className="text-center text-gray-500 text-sm">
-              Please select your age group to continue
+              {!selectedAge && !selectedActivityLevel
+                ? 'Please select your age group and activity level to continue'
+                : !selectedAge
+                ? 'Please select your age group to continue'
+                : 'Please select your activity level to continue'}
             </div>
           )}
         </form>

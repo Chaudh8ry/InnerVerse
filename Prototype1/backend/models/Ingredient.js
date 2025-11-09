@@ -11,12 +11,12 @@ const ingredientSchema = new mongoose.Schema({
   analysis_json: {
     type: mongoose.Schema.Types.Mixed,
     required: true,
-    // Structure: {
-    //   type: String,
-    //   tags: [String], // e.g., ["gluten_free", "vegan", "contains_dairy"]
-    //   potential_concerns: [{ 
-    //     condition: String, 
-    //     level: String // "LOW", "MEDIUM", "HIGH"
+    // V2 Structure: {
+    //   summary: String, // Brief 1-2 sentence neutral description
+    //   type: String, // General category (e.g., "Preservative", "Sweetener", "Natural", "Thickener")
+    //   concerns_for_conditions: [{ 
+    //     condition: String, // e.g., "Hypertension", "Diabetes", "Celiac Disease"
+    //     warning: String // Brief explanation of the risk
     //   }]
     // }
   },
@@ -29,7 +29,7 @@ const ingredientSchema = new mongoose.Schema({
 });
 
 // Index for faster lookups
-ingredientSchema.index({ ingredient_name: 1 });
+// ingredientSchema.index({ ingredient_name: 1 });
 
 module.exports = mongoose.model('Ingredient', ingredientSchema);
 

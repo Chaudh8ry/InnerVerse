@@ -34,8 +34,8 @@ api.interceptors.response.use(
 
 // Auth API calls
 export const authAPI = {
-  register: (email, password) => 
-    api.post('/auth/register', { email, password }),
+  register: (email, password, first_name, last_name) => 
+    api.post('/auth/register', { email, password, first_name, last_name }),
   
   login: (email, password) => 
     api.post('/auth/login', { email, password }),
@@ -66,14 +66,35 @@ export const analysisAPI = {
     });
   },
   
-  analyzeIngredients: (ingredientsList, productName) => 
+  analyzeIngredients: (scannedIngredientsList, productName, nutritionTable = {}) => 
     api.post('/analysis/analyze-ingredients', {
-      ingredients_list: ingredientsList,
+      scanned_ingredients_list: scannedIngredientsList,
+      scanned_nutrition_table: nutritionTable,
       product_name: productName,
     }),
   
   getIngredient: (ingredientName) => 
     api.get(`/analysis/ingredient/${encodeURIComponent(ingredientName)}`),
+};
+
+// Scans API calls
+export const scansAPI = {
+  saveScan: (productName, analysisResult, overallRating, nutritionTableData = {}) =>
+    api.post('/scans', {
+      product_name: productName,
+      analysis_result: analysisResult,
+      overall_rating: overallRating,
+      nutrition_table_data: nutritionTableData
+    }),
+  
+  getScans: () =>
+    api.get('/scans'),
+  
+  getScan: (scanId) =>
+    api.get(`/scans/${scanId}`),
+  
+  deleteScan: (scanId) =>
+    api.delete(`/scans/${scanId}`),
 };
 
 // Helper functions

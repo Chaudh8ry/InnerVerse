@@ -49,6 +49,11 @@ const healthProfileSchema = new mongoose.Schema({
     bmi: {
       type: Number
     }
+  },
+  activity_level: {
+    type: String,
+    enum: ['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active'],
+    required: true
   }
 }, {
   timestamps: true

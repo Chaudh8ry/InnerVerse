@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Camera, Upload, Scan, LogOut, User } from 'lucide-react';
+import { Camera, Upload, Scan, LogOut, User, History } from 'lucide-react';
 import { analysisAPI, logout } from '../services/api';
 
-const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
+const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete, onViewHistory }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +43,8 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
       // Navigate to confirmation view with extracted data
       onAnalysisComplete({
         step: 'confirmation',
+        scanned_ingredients_list: response.data.scanned_ingredients_list,
+        scanned_nutrition_table: response.data.scanned_nutrition_table || {},
         extractedText: response.data.extracted_text,
         ingredientsList: response.data.ingredients_list,
         imageUrl: selectedImage
@@ -67,11 +69,20 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-semibold text-gray-800" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
               InnerVerse
             </h1>
           </div>
           <div className="flex items-center space-x-4">
+            {onViewHistory && (
+              <button
+                onClick={onViewHistory}
+                className="flex items-center px-4 py-2 text-purple-600 hover:text-purple-700 font-medium"
+              >
+                <History className="h-5 w-5 mr-2" />
+                Scan History
+              </button>
+            )}
             <button
               onClick={onProfileEdit}
               className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
@@ -90,32 +101,32 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
         </div>
 
         {/* Welcome Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            Welcome back, {user.email}!
+        <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
+            Welcome, {user.first_name || user.email}!
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-base leading-relaxed">
             Upload a food label image to get personalized health recommendations based on your profile.
           </p>
           
           {!user.hasProfile && (
-            <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-orange-800 font-medium">
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 font-medium text-base">
                 📋 Complete your health profile first to get personalized analysis!
               </p>
               <button
                 onClick={onProfileEdit}
-                className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                className="mt-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
               >
-                Create Profile Now
+                <span className="text-sm font-medium">Create Profile Now</span>
               </button>
             </div>
           )}
         </div>
 
         {/* Image Upload Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+        <div className="bg-white rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
+          <h3 className="text-lg font-medium text-gray-800 mb-6 flex items-center tracking-wide">
             <Camera className="h-6 w-6 text-purple-500 mr-3" />
             Food Label Scanner
           </h3>
@@ -148,8 +159,8 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
                   >
                     Remove Image
                   </button>
-                  <label className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer">
-                    Replace Image
+                  <label className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 cursor-pointer">
+                    <span className="text-sm font-medium">Replace Image</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -170,9 +181,9 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
                     Take a photo or upload an image of the ingredients list
                   </p>
                   <div className="flex justify-center space-x-4">
-                    <label className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer flex items-center">
+                    <label className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 cursor-pointer flex items-center">
                       <Upload className="h-5 w-5 mr-2" />
-                      Upload Image
+                      <span className="text-sm font-medium">Upload Image</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -180,9 +191,9 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
                         className="hidden"
                       />
                     </label>
-                    <label className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer flex items-center">
+                    <label className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer flex items-center">
                       <Camera className="h-5 w-5 mr-2" />
-                      Take Photo
+                      <span className="text-sm font-medium">Take Photo</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -203,14 +214,14 @@ const Scanner = ({ user, onLogout, onProfileEdit, onAnalysisComplete }) => {
               <button
                 onClick={handleAnalyze}
                 disabled={loading || !user.hasProfile}
-                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center mx-auto ${
+                className={`px-8 py-4 rounded-lg font-medium text-base transition-all duration-200 flex items-center mx-auto ${
                   loading || !user.hasProfile
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-lg'
                 }`}
               >
-                <Scan className="h-6 w-6 mr-3" />
-                {loading ? 'Analyzing...' : 'Analyze Ingredients'}
+                <Scan className="h-5 w-5 mr-3" />
+                <span>{loading ? 'Analyzing...' : 'Analyze Ingredients'}</span>
               </button>
             </div>
           )}
