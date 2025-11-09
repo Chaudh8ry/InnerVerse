@@ -201,11 +201,15 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
   };
 
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
+  setExpandedSections(prev => {
+    const newState = Object.keys(prev).reduce((acc, key) => {
+      acc[key] = key === section ? !prev[key] : false;
+      return acc;
+    }, {});
+    return newState;
+  });
+};
+
 
   const calculateBMI = () => {
     const { height, weight, unit } = bodyMetrics;
@@ -497,7 +501,7 @@ const ProfileForm = ({ onBack, onProfileSaved, existingProfile = null }) => {
               )}
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               {Object.entries(nutritionData).map(([key, data]) => (
                 <div key={key} className={`border rounded-lg ${data.color}`}>
                   <button
