@@ -49,7 +49,7 @@ const Login = ({ onLogin, switchToRegister }) => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Heart className="h-8 w-8 text-red-500 mr-3" />
-            <h1 className="text-2xl font-semibold text-gray-800" style={{ fontFamily: "'Lexend', 'Inter', sans-serif" }}>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent" >
               InnerVerse
             </h1>
             <Shield className="h-8 w-8 text-emerald-600 ml-3" />
